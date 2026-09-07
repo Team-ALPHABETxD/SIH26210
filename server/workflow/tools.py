@@ -182,9 +182,3 @@ def get_weather_forecast(lat, lon):
     res = requests.get(url, params=params)
     print(res.json())
     return res.json()
-
-
-# TEST
-analyse_soil_img(
-    "https://www.eurokidsindia.com/blog/wp-content/uploads/2023/11/different-types-of-soils-and-their-charachterstics-870x570.jpg"
-)

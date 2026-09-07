@@ -4,9 +4,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 
-from workflow.graphs import build_graph
-
-
 class CropDetails(BaseModel):
 	model_config = ConfigDict(extra="allow")
 
@@ -73,6 +70,7 @@ def get_sensor_data(device_id: str) -> dict[str, Any]:
 @app.post("/generate-report")
 def generate_report(request: ReportRequest) -> dict[str, Any]:
 	try:
+		from workflow.graphs import build_graph
 		from workflow.debugger import AgentDebugger
 
 		graph = build_graph(AgentDebugger())
