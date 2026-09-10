@@ -32,7 +32,8 @@ class ReportRequest(BaseModel):
 	temp: float
 	humidity: float
 	moisture: float
-	ambidientLight: float
+	dryness: float = 0.0
+	ambidientLight: float | None = None
 	crop_details: CropDetails
 
 
@@ -81,11 +82,12 @@ def generate_report(request: ReportRequest) -> dict[str, Any]:
         from workflow.debugger import AgentDebugger
 
         crop_details = request.crop_details.model_dump(by_alias=True)
+        dryness = request.dryness if request.dryness is not None else (request.ambidientLight or 0.0)
         crop_details["sensor_data"] = {
             "temp": request.temp,
             "humidity": request.humidity,
             "moisture": request.moisture,
-            "dryness": request.dryness,
+            "dryness": dryness,
         }
 
         initial_state = {
