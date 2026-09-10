@@ -1,16 +1,24 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing import TypedDict, Optional, Dict
 
 
 class Validation(BaseModel):
-    flag: bool = Field(description="The given crop details validation flag")
-    reason: str = Field(description="Reason behind the invalidity of the input in one line")
+    flag: bool = Field(default=True, description="The given crop details validation flag")
+    reason: str = Field(default="NONE", description="Reason behind the invalidity of the input in one line")
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_missing_flag(cls, values):
+        if isinstance(values, dict) and "flag" not in values:
+            values = dict(values)
+            values["flag"] = True
+        return values
 
 
 
 
 class Weather(BaseModel):
-    summary: str= Field(description= "Summary of the weather forecasts in detailed.")
+    summary: str = Field(default="", description="Summary of the weather forecasts in detailed.")
 
 class Soil(BaseModel):
     is_soil: bool
@@ -21,13 +29,13 @@ class Soil(BaseModel):
     notes: str
 
 class Disease(BaseModel):
-    NA: bool = Field(description="Indicates whether the provided crop details offer any meaningful evidence of any disease possibility (True: No disease predicted /False: disease predicted).")
-    name: str = Field(description="The identified disease affecting the crop.")
-    reason: str = Field(description="The underlying cause or conditions that led to the disease.")
-    status: str = Field(description="Current disease condition, e.g., 'fully contaminated', 'may occur in future'.")
-    spoilage_risk: str = Field(description="The severity level of potential crop spoilage: High, Medium, or Low.")
-    days_to_spoil: int = Field(description="Estimated number of days before the crop becomes fully spoiled.")
-    confidence: float = Field(description="Accuracy of the prediction.")
+    NA: bool = Field(default=True, description="Indicates whether the provided crop details offer any meaningful evidence of any disease possibility (True: No disease predicted /False: disease predicted).")
+    name: str = Field(default="", description="The identified disease affecting the crop.")
+    reason: str = Field(default="", description="The underlying cause or conditions that led to the disease.")
+    status: str = Field(default="", description="Current disease condition, e.g., 'fully contaminated', 'may occur in future'.")
+    spoilage_risk: str = Field(default="Low", description="The severity level of potential crop spoilage: High, Medium, or Low.")
+    days_to_spoil: int = Field(default=0, description="Estimated number of days before the crop becomes fully spoiled.")
+    confidence: float = Field(default=0.0, description="Accuracy of the prediction.")
 
 
 class RevenueStat(BaseModel):

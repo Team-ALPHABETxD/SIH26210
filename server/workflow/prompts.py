@@ -11,7 +11,9 @@ def validator_prompt(dtls):
 
     RULES:
     - Output ONLY valid JSON.
-    - If input is valid put "NONE" to the reason feild.
+    - Include both fields: "flag" and "reason".
+    - If input is valid, return {{"flag": true, "reason": "NONE"}}.
+    - If input is invalid, return {{"flag": false, "reason": "<short reason>"}}.
     - Do NOT include explanations.
     - Do NOT add any text outside the JSON.
     - Do NOT add fields not listed.
@@ -59,10 +61,11 @@ def predict_disease_prompt(dtls):
     Your job is to predict if a disease may occur or is already present.
 
     Rules:
-    - Output ONLY JSON.
+    - Output ONLY valid JSON for the object below.
     - Fill all fields with meaningful values if a disease is predicted.
-    - If no disease is predicted, set NA = true (Boolean) and leave other fields empty/defaults.
-    - Do NOT add fields not listed. 
+    - If no disease is predicted, return {{"NA": true, "name": "", "reason": "", "status": "", "spoilage_risk": "Low", "days_to_spoil": 0, "confidence": 0.0}}.
+    - Do NOT add fields not listed.
+    - Do NOT return an empty string, null, or plain text.
     """
 
     return prompt

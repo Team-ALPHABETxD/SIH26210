@@ -1,8 +1,14 @@
+import os
+import sys
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
+
+SERVER_DIR = os.path.dirname(os.path.abspath(__file__))
+if SERVER_DIR not in sys.path:
+    sys.path.insert(0, SERVER_DIR)
 
 class CropDetails(BaseModel):
 	model_config = ConfigDict(extra="allow")
@@ -69,19 +75,41 @@ def get_sensor_data(device_id: str) -> dict[str, Any]:
 
 @app.post("/generate-report")
 def generate_report(request: ReportRequest) -> dict[str, Any]:
-	try:
-		from workflow.graphs import build_graph
-		from workflow.debugger import AgentDebugger
+    try:
+        from workflow.graphs import build_graph
+        from workflow.debugger import AgentDebugger
 
-		graph = build_graph(AgentDebugger())
-		crop_details = request.crop_details.model_dump(by_alias=True)
-		crop_details["sensor_data"] = {
-			"temp": request.temp,
-			"humidity": request.humidity,
-			"moisture": request.moisture,
-			"dryness": request.dryness,
-		}
-		state = graph.invoke({"crop_details": crop_details})
-		return state
-	except Exception as exc:
-		raise HTTPException(status_code=500, detail=f"Report generation failed: {exc}") from exc
+        crop_details = request.crop_details.model_dump(by_alias=True)
+        crop_details["sensor_data"] = {
+            "temp": request.temp,
+            "humidity": request.humidity,
+            "moisture": request.moisture,
+            "dryness": request.dryness,
+        }
+
+        initial_state = {
+            "crop_details": crop_details,
+            "validated": None,
+            "weather_details": None,
+            "soil_details": None,
+            "predicted_yeild": None,
+            "disease_details": None,
+            "rev_strat_details": None,
+            "plan": None,
+            "collaborative_plan": None,
+            "control_strats": None,
+        }
+
+        graph = build_graph(AgentDebugger())
+        result = graph.invoke(initial_state)
+
+        if result is None:
+            raise ValueError("Report generation returned no result")
+
+        return {"status": "success", "report": result}
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Report generation failed: {exc}"
+        ) from exc
