@@ -26,7 +26,7 @@ class ReportRequest(BaseModel):
 	temp: float
 	humidity: float
 	moisture: float
-	dryness: float
+	ambidientLight: float
 	crop_details: CropDetails
 
 
@@ -35,7 +35,7 @@ class SensorData(BaseModel):
 	temp: float
 	humidity: float
 	moisture: float
-	dryness: float
+	ambidientLight: float
 
 
 app = FastAPI(title="Krisy Crop Report API")
