@@ -27,7 +27,47 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   },[]);
 
-  useEffect(()=>{ if(sensor) setForm(f=>({...f,temp:String(sensor.temp),humidity:String(sensor.humidity),moisture:String(sensor.moisture),dryness:sensor.ambidientLight != null ? String(sensor.ambidientLight) : f.dryness,raining:Boolean(sensor.raining)})); },[sensor]);
+  useEffect(()=>{
+    if(!sensor) return;
+
+    const validNumber = (value) => {
+      if(value === null || value === undefined || value === '') return null;
+
+      const number = Number(value);
+
+      return Number.isFinite(number) ? String(number) : null;
+    };
+
+    setForm(f=>({
+      ...f,
+
+      temp:
+        validNumber(sensor.temp) !== null
+          ? validNumber(sensor.temp)
+          : f.temp,
+
+      humidity:
+        validNumber(sensor.humidity) !== null
+          ? validNumber(sensor.humidity)
+          : f.humidity,
+
+      moisture:
+        validNumber(sensor.moisture) !== null
+          ? validNumber(sensor.moisture)
+          : f.moisture,
+
+      dryness:
+        validNumber(sensor.ambidientLight) !== null
+          ? validNumber(sensor.ambidientLight)
+          : f.dryness,
+
+      raining:
+        typeof sensor.raining === 'boolean'
+          ? sensor.raining
+          : f.raining
+    }));
+  },[sensor]);
+
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
 
   const pickImage = (key) => {
@@ -72,6 +112,14 @@ export default function Dashboard() {
     } catch(err){ setError(err.message || 'Unable to generate report.'); }
     finally { setLoading(false); }
   }
+
+  const safeDisplay = (value) => {
+    if(value === null || value === undefined || value === '') return '—';
+
+    const number = Number(value);
+
+    return Number.isFinite(number) ? String(number) : '—';
+  };
 
   return <div className="page-shell"><Nav active="dashboard"/><main className="app-page"><div className="container">
     <div className="page-heading"><div className="eyebrow"><Sparkles size={13}/> Crop intelligence</div><h1>New crop analysis</h1><p>Enter the field details, connect sensor context and generate one structured decision report.</p></div>
@@ -156,10 +204,10 @@ export default function Dashboard() {
         <div className="card sensor-card">
           <div className="sensor-head"><div><strong>Sensor context</strong><div className="hint" style={{marginTop:4}}>ESP32 / device sensor values</div></div><span className="pill">{sensor?'LIVE':'MANUAL'}</span></div>
           <div className="sensor-grid">
-            <div className="metric"><span>Temperature</span><strong>{form.temp}°</strong></div>
-            <div className="metric"><span>Humidity</span><strong>{form.humidity}%</strong></div>
-            <div className="metric"><span>Moisture</span><strong>{form.moisture}%</strong></div>
-            <div className="metric"><span>Ambient Light</span><strong>{form.dryness} lux</strong></div>
+            <div className="metric"><span>Temperature</span><strong>{safeDisplay(form.temp)}°</strong></div>
+            <div className="metric"><span>Humidity</span><strong>{safeDisplay(form.humidity)}%</strong></div>
+            <div className="metric"><span>Moisture</span><strong>{safeDisplay(form.moisture)}%</strong></div>
+            <div className="metric"><span>Ambient Light</span><strong>{safeDisplay(form.dryness)} lux</strong></div>
             <div className="metric"><span>Rain</span><strong>{form.raining ? 'Raining' : 'Not raining'}</strong></div>
           </div>
           {sensor ? <div className="hint" style={{marginTop:12}}><Radio size={13} style={{verticalAlign:'-2px'}}/> Synced from /sensor-data/esp32-1</div> : <div className="hint" style={{marginTop:12}}>No live reading found — manual values stay editable.</div>}
