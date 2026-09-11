@@ -20,9 +20,14 @@ export default function Dashboard() {
   const [msg,setMsg]=useState('');
   const [error,setError]=useState('');
 
-  useEffect(()=>{ fetchSensor().then(setSensor).catch(()=>{}); },[]);
+  useEffect(()=>{
+    const loadSensor = () => fetchSensor().then(setSensor).catch(()=>{});
+    loadSensor();
+    const interval = setInterval(loadSensor, 3000);
+    return () => clearInterval(interval);
+  },[]);
 
-  useEffect(()=>{ if(sensor) setForm(f=>({...f,temp:String(sensor.temp),humidity:String(sensor.humidity),moisture:String(sensor.moisture),dryness:String(sensor.dryness),raining:Boolean(sensor.raining)})); },[sensor]);
+  useEffect(()=>{ if(sensor) setForm(f=>({...f,temp:String(sensor.temp),humidity:String(sensor.humidity),moisture:String(sensor.moisture),dryness:sensor.ambidientLight != null ? String(sensor.ambidientLight) : f.dryness,raining:Boolean(sensor.raining)})); },[sensor]);
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
 
   const pickImage = (key) => {
@@ -154,7 +159,8 @@ export default function Dashboard() {
             <div className="metric"><span>Temperature</span><strong>{form.temp}°</strong></div>
             <div className="metric"><span>Humidity</span><strong>{form.humidity}%</strong></div>
             <div className="metric"><span>Moisture</span><strong>{form.moisture}%</strong></div>
-            <div className="metric"><span>Dryness</span><strong>{form.dryness}%</strong></div>
+            <div className="metric"><span>Ambient Light</span><strong>{form.dryness} lux</strong></div>
+            <div className="metric"><span>Rain</span><strong>{form.raining ? 'Raining' : 'Not raining'}</strong></div>
           </div>
           {sensor ? <div className="hint" style={{marginTop:12}}><Radio size={13} style={{verticalAlign:'-2px'}}/> Synced from /sensor-data/esp32-1</div> : <div className="hint" style={{marginTop:12}}>No live reading found — manual values stay editable.</div>}
         </div>
