@@ -1,4 +1,4 @@
- 'use client';
+'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Crosshair, ImagePlus, LoaderCircle, MapPin, Radio, Sparkles } from 'lucide-react';
 import Nav from '../../components/Nav';
@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 
 const defaults = { item:'', growth:'Vegetative', sowing_date:'', current_date:new Date().toISOString().slice(0,10),
   average_rain_fall_mm_per_year:'800', pesticides_tonnes:'0.2', avg_temp:'25', lat:'23.5937', lon:'80.9629',
-  storage_availability:'Moderate', disease_detect:false, crop_img:'', soil_img:'', temp:'27', humidity:'65', moisture:'42', dryness:'28' };
+  storage_availability:'Moderate', disease_detect:false, crop_img:'', soil_img:'', temp:'27', humidity:'65', moisture:'42', dryness:'28', raining:false };
 
 export default function Dashboard() {
   const router = useRouter();
@@ -22,7 +22,7 @@ export default function Dashboard() {
 
   useEffect(()=>{ fetchSensor().then(setSensor).catch(()=>{}); },[]);
 
-  useEffect(()=>{ if(sensor) setForm(f=>({...f,temp:String(sensor.temp),humidity:String(sensor.humidity),moisture:String(sensor.moisture),dryness:String(sensor.dryness)})); },[sensor]);
+  useEffect(()=>{ if(sensor) setForm(f=>({...f,temp:String(sensor.temp),humidity:String(sensor.humidity),moisture:String(sensor.moisture),dryness:String(sensor.dryness),raining:Boolean(sensor.raining)})); },[sensor]);
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
 
   const pickImage = (key) => {
@@ -52,6 +52,7 @@ export default function Dashboard() {
     try {
       const payload = {
         temp:Number(form.temp), humidity:Number(form.humidity), moisture:Number(form.moisture), dryness:Number(form.dryness),
+        raining:Boolean(form.raining),
         crop_details: {
           Item: form.item, average_rain_fall_mm_per_year:Number(form.average_rain_fall_mm_per_year), avg_temp:Number(form.avg_temp),
           crop_img: form.crop_img || null, current_date:form.current_date, disease_detect:form.disease_detect, growth:form.growth,
@@ -97,14 +98,49 @@ export default function Dashboard() {
             <input value={form.crop_img} onChange={e=>set('crop_img',e.target.value)} placeholder="https://.../crop.jpg"/>
             {form.crop_img && <div className="preview"><img src={form.crop_img} alt="Crop preview" onError={e=>e.currentTarget.style.display='none'}/></div>}
           </div>
-          <div className="field full">
-            <div className="check-row"><input id="dd" type="checkbox" checked={form.disease_detect} onChange={e=>set('disease_detect',e.target.checked)}/><label htmlFor="dd">Include image-based crop disease analysis</label></div>
+          <div className="field">
+            <div className="check-row">
+              <input
+                id="dd"
+                type="checkbox"
+                checked={form.disease_detect}
+                onChange={e=>set('disease_detect',e.target.checked)}
+              />
+              <label htmlFor="dd">Include image-based crop disease analysis</label>
+            </div>
           </div>
 
-          <div className="field"><label>Sensor temperature °C</label><input type="number" step="0.1" value={form.temp} onChange={e=>set('temp',e.target.value)}/></div>
-          <div className="field"><label>Sensor humidity %</label><input type="number" step="0.1" value={form.humidity} onChange={e=>set('humidity',e.target.value)}/></div>
-          <div className="field"><label>Sensor moisture %</label><input type="number" step="0.1" value={form.moisture} onChange={e=>set('moisture',e.target.value)}/></div>
-          <div className="field"><label>Sensor dryness %</label><input type="number" step="0.1" value={form.dryness} onChange={e=>set('dryness',e.target.value)}/></div>
+          <div className="field">
+            <div className="check-row">
+              <input
+                id="raining"
+                type="checkbox"
+                checked={form.raining}
+                onChange={e=>set('raining',e.target.checked)}
+              />
+              <label htmlFor="raining">Is it raining?</label>
+            </div>
+          </div>
+
+          <div className="field">
+            <label>Sensor temperature °C</label>
+            <input type="number" step="0.1" value={form.temp} onChange={e=>set('temp',e.target.value)}/>
+          </div>
+
+          <div className="field">
+            <label>Sensor humidity %</label>
+            <input type="number" step="0.1" value={form.humidity} onChange={e=>set('humidity',e.target.value)}/>
+          </div>
+
+          <div className="field">
+            <label>Sensor moisture %</label>
+            <input type="number" step="0.1" value={form.moisture} onChange={e=>set('moisture',e.target.value)}/>
+          </div>
+
+          <div className="field">
+            <label>Ambient Light (lux)</label>
+            <input type="number" step="0.1" value={form.dryness} onChange={e=>set('dryness',e.target.value)}/>
+          </div>
         </div>
         {msg && <div className="status info">{msg}</div>}
         {error && <div className="status error">{error}</div>}

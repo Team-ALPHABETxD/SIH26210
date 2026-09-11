@@ -34,6 +34,7 @@ class ReportRequest(BaseModel):
 	moisture: float
 	dryness: float = 0.0
 	ambidientLight: float | None = None
+	raining: bool = False
 	crop_details: CropDetails
 
 
@@ -77,42 +78,43 @@ def get_sensor_data(device_id: str) -> dict[str, Any]:
 
 @app.post("/generate-report")
 def generate_report(request: ReportRequest) -> dict[str, Any]:
-    try:
-        from workflow.graphs import build_graph
-        from workflow.debugger import AgentDebugger
+	try:
+		from workflow.graphs import build_graph
+		from workflow.debugger import AgentDebugger
 
-        crop_details = request.crop_details.model_dump(by_alias=True)
-        dryness = request.dryness if request.dryness is not None else (request.ambidientLight or 0.0)
-        crop_details["sensor_data"] = {
-            "temp": request.temp,
-            "humidity": request.humidity,
-            "moisture": request.moisture,
-            "dryness": dryness,
-        }
+		crop_details = request.crop_details.model_dump(by_alias=True)
+		dryness = request.dryness if request.dryness is not None else (request.ambidientLight or 0.0)
+		crop_details["sensor_data"] = {
+			"temp": request.temp,
+			"humidity": request.humidity,
+			"moisture": request.moisture,
+			"dryness": dryness,
+			"raining": request.raining,
+		}
 
-        initial_state = {
-            "crop_details": crop_details,
-            "validated": None,
-            "weather_details": None,
-            "soil_details": None,
-            "predicted_yeild": None,
-            "disease_details": None,
-            "rev_strat_details": None,
-            "plan": None,
-            "collaborative_plan": None,
-            "control_strats": None,
-        }
+		initial_state = {
+			"crop_details": crop_details,
+			"validated": None,
+			"weather_details": None,
+			"soil_details": None,
+			"predicted_yeild": None,
+			"disease_details": None,
+			"rev_strat_details": None,
+			"plan": None,
+			"collaborative_plan": None,
+			"control_strats": None,
+		}
 
-        graph = build_graph(AgentDebugger())
-        result = graph.invoke(initial_state)
+		graph = build_graph(AgentDebugger())
+		result = graph.invoke(initial_state)
 
-        if result is None:
-            raise ValueError("Report generation returned no result")
+		if result is None:
+			raise ValueError("Report generation returned no result")
 
-        return {"status": "success", "report": result}
+		return {"status": "success", "report": result}
 
-    except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Report generation failed: {exc}"
-        ) from exc
+	except Exception as exc:
+		raise HTTPException(
+			status_code=500,
+			detail=f"Report generation failed: {exc}"
+		) from exc
